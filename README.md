@@ -58,10 +58,37 @@ To comply with banking security standards, the **VLAN 60 (Guest Wi-Fi)** segment
 ## 🔍 Verification & Operational Proofs
 
 ### 1. IPsec Phase 1 (ISAKMP) & Phase 2 (ESP Encapsulation)
-The tunnel establishes in `QM_IDLE` state with symmetric transform sets (`esp-aes 256 esp-sha-hmac`).
+The tunnel establishes in `QM_IDLE` state with symmetric transform sets (`esp-aes 256 esp-sha-hmac`):
 
-```text
-Branch-Edge# show crypto isakmp sa
+<pre><code>Branch-Edge# show crypto isakmp sa
 IPv4 Crypto ISAKMP SA
 dst             src             state          conn-id slot status
-203.0.113.1     203.0.113.2     QM_IDLE              1    0 ACTIVE
+203.0.113.1     203.0.113.2     QM_IDLE              1    0 ACTIVE</code></pre>
+
+Traffic encapsulation verification confirms active encryption/decryption counters:
+* `#pkts encaps > 0, #pkts encrypt > 0`
+* `#send errors = 0, #recv errors = 0`
+
+![VPN Verification](assets/vpn-verification.png)
+
+### 2. NAT-Exemption Validation
+Corporate traffic traversing the IPsec tunnel is excluded from PAT translation:
+
+<pre><code>Branch-Edge# show ip nat translations
+! (Table remains clean during HQ Server pings, confirming No-NAT rule execution)</code></pre>
+
+### 3. Guest Wi-Fi Access & Lateral Isolation
+* HTTP/HTTPS access to `http://10.10.20.100` succeeds from customer terminals.
+* Lateral ICMP probes to `10.20.40.10` (Staff PC) and default gateways are explicitly dropped.
+
+![Wi-Fi Test](assets/wifi-isolation-test.png)
+
+---
+
+## 🚀 How to Run the Simulation
+
+1. Clone this repository:
+<pre><code>git clone https://github.com/DownToUp/cisco-enterprise-secure-vpn-wifi.git</code></pre>
+2. Open **Cisco Packet Tracer** (v8.0 or higher recommended).
+3. Navigate to the `topology/` directory and open the `.pkt` file.
+4. Test end-to-end reachability and verify security policies directly from terminal command prompts.
